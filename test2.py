@@ -3,15 +3,9 @@ import pygame
 import numpy as np
 import time
 import os 
-
-
-#config
-WIN_NAME =  "Mater"
-WIN_RES = (1280,960)
-WIN_VER = "1.0"
-FPS = 30
-
-#Variables
+from assets  import *
+from player import *
+from cars import *
 
 
 #Init, Title
@@ -22,79 +16,40 @@ pygame.display.set_caption(WIN_NAME + " v" + WIN_VER)
 screen = pygame.display.set_mode(WIN_RES, pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
-# Assets
-
-game_folder = os.path.dirname(__file__)
-img_folder = os.path.join(game_folder, "img")
-
-
-# Class
-
-class Player(pygame.sprite.Sprite):
-    # sprite for car
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(os.path.join(img_folder,"red_car2.png")).convert()
-        self.image.set_colorkey((255,255,255))
-        self.orig_image = self.image
-        self.rect = self.image.get_rect()
-        self.rect.center = (WIN_RES[0]/2, WIN_RES[1]/2)
-        self.speed = 0 
-        self.angle = 0
-        
-    def update(self):
-        self.speed = 0
-        keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_LEFT]:
-            self.angle += +5
-            self.rotate()
-        if keystate[pygame.K_RIGHT]:
-            self.angle += -5
-            self.rotate()              
-        if keystate[pygame.K_UP]:
-            self.speed = 10
-            angle_inc = self.angle % 360
-            print(angle_inc) 
-            if (angle_inc >= 0):
-                print(" A gauche")
-                self.rect.x     = self.rect.x  - self.speed*np.sin(angle_inc*np.pi/180)
-                self.rect.y     = self.rect.y  - self.speed*np.cos(angle_inc*np.pi/180)
-            if (angle_inc < 0):
-                print(" A droite")
-                self.rect.x     = self.rect.x  + self.speed*np.sin(angle_inc*np.pi/180)
-                self.rect.y     = self.rect.y  + self.speed*np.cos(angle_inc*np.pi/180)
-                                    
-        if keystate[pygame.K_DOWN]:
-            self.speed = 10
-            angle_inc = self.angle % 360
-            print(angle_inc) 
-            if (angle_inc >= 0):
-                print(" A gauche")
-                self.rect.x     = self.rect.x  +  self.speed*np.sin(angle_inc*np.pi/180)
-                self.rect.y     = self.rect.y  + self.speed*np.cos(angle_inc*np.pi/180)
-            if (angle_inc < 0):
-                print(" A droite")
-                self.rect.x     = self.rect.x  - self.speed*np.sin(angle_inc*np.pi/180)
-                self.rect.y     = self.rect.y  - self.speed*np.cos(angle_inc*np.pi/180)
-            
-
-            
-    def rotate(self):
-        """Rotate the image of the sprite around its center."""
-        # `rotozoom` usually looks nicer than `rotate`. Pygame's rotation
-        # functions return new images and don't modify the originals.
-        self.image = pygame.transform.rotozoom(self.orig_image, self.angle, 1)
-        # Create a new rect with the center of the old rect.
-        self.rect = self.image.get_rect(center=self.rect.center)
-
-
-        
+       
 # Sprite group
 
 sprites_all = pygame.sprite.Group()
+cars_all = pygame.sprite.Group()
+blocks_all = pygame.sprite.Group()
 player = Player()
 sprites_all.add(player)
+car_one = Cars()
+cars_all.add(car_one)
+car_two = Cars()
+cars_all.add(car_two)
+car_four = Cars()
+cars_all.add(car_four)
+car_three = Cars()
+cars_all.add(car_three)
 
+
+def detection(ent, color):
+    for entite in ent:
+        pygame.draw.rect(screen, color, ((entite.rect.topleft[0]-10, entite.rect.topleft[1]-10), (entite.image.get_size()[0]+20,entite.image.get_size()[1]+20)),2)    
+ 
+class Block(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((30,100))
+        self.image.fill((255,0,0))
+        self.rect = self.image.get_rect()
+
+    def createBlock(self, position):
+        print(position[0], position[1])
+        self.rect.x =  position[0]
+        self.rect.y = position[1]
+    
 #Loop
 launched = True
 angle = 0
@@ -105,16 +60,33 @@ while launched:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             launched = False
-            pygame.quit()           
+            pygame.quit() 
+        if event.type == pygame.MOUSEBUTTONUP:
+            b = Block()
+            blocks_all.add(b)
+            b.createBlock(pygame.mouse.get_pos())    
     
     #Update
     sprites_all.update()
+    cars_all.update()
+    blocks_all.update()
+    
+    #check collisions
+    for b in blocks_all:   
+        #destroy
+        pygame.sprite.spritecollide(b, cars_all, True)
+        pygame.sprite.spritecollide(b, sprites_all, True)
     
     #Draw Render
     screen.fill((0,0,255))
 
     #player.blitRotate(screen, pos, old_pos)
     sprites_all.draw(screen)
+    cars_all.draw(screen)
+    blocks_all.draw(screen)
+    
+    detection(sprites_all, (255,0,0))
+    detection(cars_all, (0,255,0))
     
     #Flip the final
     pygame.display.flip()
