@@ -20,18 +20,46 @@ class Player(pygame.sprite.Sprite):
         self.speed = 0 
         self.angle = 0
         
+        #Sensors
+        self.sensor_0 = pygame.Rect(self.rect.center[0], self.rect.center[1],3,10)
+        
+        # self.sensor_1
+        # self.sensor_2
+        # self.sensor_3
+        # self.sensor_4
+        # self.sensor_5
+        
+    def collision(self,screen,ent,font):
+        color = (0,255,0)
+        #pygame.draw.circle(screen,(0,255,0), self.rect.center, 70, 4)
+        pygame.draw.rect(screen, color, self.rect, 2)
+
+        for entite in pygame.sprite.spritecollide(self, ent, False):
+            clip = self.rect.clip(entite.rect)
+            pygame.draw.rect(screen, pygame.Color('red'), clip)
+            hits = [edge for edge in ['bottom', 'top', 'left', 'right'] if getattr(clip, edge) == getattr(self.rect, edge)]
+            # text = font.render(f'Collision at {", ".join(hits)}', True, pygame.Color('white'))
+            # screen.blit(text, (20, 70))
+            
+      
+        
     def update(self):
         self.speed = 0
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
             self.angle += +5
             self.rotate()
+
         if keystate[pygame.K_RIGHT]:
             self.angle += -5
             self.rotate()              
+
         if keystate[pygame.K_UP]:
             self.speed = 10
             angle_inc = self.angle % 360
+            
+            if keystate[pygame.K_g]:
+                    self.speed += 20
             # print(angle_inc) 
             if (angle_inc >= 0):
                 # print(" A gauche")
@@ -54,7 +82,10 @@ class Player(pygame.sprite.Sprite):
                 # print(" A droite")
                 self.rect.x     = self.rect.x  - self.speed*np.sin(angle_inc*np.pi/180)
                 self.rect.y     = self.rect.y  - self.speed*np.cos(angle_inc*np.pi/180)
-                
+         
+                        
+
+    
         if self.rect.right > WIN_RES[0]:
             self.rect.right = WIN_RES[0]
         if self.rect.left < 0:
